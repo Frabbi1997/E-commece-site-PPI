@@ -1,6 +1,7 @@
 <?php
-$title = 'Home';
-require_once 'partial/_header.php';
+
+//$title = 'Home';
+require_once './partial/_header.php';
 
  $query = 'SELECT id, name, slug, image, price FROM product';
  $stmt =$connect->query($query);

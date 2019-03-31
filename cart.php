@@ -1,110 +1,129 @@
-<?php $title='Carts'; ?>
+<?php $title = 'Carts';
 
-    <?php require_once'partial/_header.php'; ?>
-<?php
-  $cart = $_SESSION['cart'] ?? [];
+ require_once 'partial/_header.php';
 
-  if (isset($_POST['add'])){
-        $id = (int)$_POST['id'];
+   if(isset($_POST['clear'])){
+       unset($_SESSION['cart']);
+       $_SESSION['cart']=[];
+   }
 
-try {
+   if(isset($_POST['delete'])){
+       $key= (string)($_POST['id']);
+       unset($_SESSION['cart'][$key]);
+   }
+
+
+    $cart = $_SESSION['cart']? $_SESSION['cart']:[];
+
+if (isset($_POST['add'])) {
+    $id = (int)$_POST['id'];
+
+    try {
 
         $query = 'SELECT  name, price FROM product WHERE id=:id';
         $stmt = $connect->prepare($query);
-        $stmt->bindParam(':id',$id);
+        $stmt->bindParam(':id', $id);
         $stmt->execute();
 
         $product = $stmt->fetch();
-        $key = (string) $id;
+        $key = (string)$id;
 
-        if(array_key_exists($key, $cart)){
+        if (array_key_exists($key, $cart)) {
             $cart[$key]['quantity']++;
-            $cart[$key]['toral_price'] += $cart[$key]['price'];
-        }
-        else{
+            $cart[$key]['total_price'] += $cart[$key]['price'];
+//            $cart[$key]['total_price'] =(float) $cart[$key]['total_price'];
+        } else {
             $cart[$key] = [
-                'name'=>$product['name'],
-                'price'=>$product['price'],
-                'quantity'=>1,
-                'total_price'=>$product['price']
+                'name' => $product['name'],
+                'price' => (float) $product['price'],
+                'quantity' => (int) 1,
+                'total_price' => (float) $product['price']
             ];
         }
 
-    $_SESSION['cart'] = $cart;
+        $_SESSION['cart'] = $cart;
+
+    } catch (Exception $e) {
+        die($e->getMessage());
+    }
 
 }
 
 
-  catch(Exception $e){
-          die($e->getMessage());
-      }
 
- }
-
- header('Content-Type: application/json');
-  echo json_encode($_SESSION['cart']);
-  die();
-
- ?>
-
-   <div class="container">
-       <main role="main">
-           <div class="contaener">
-               <br/>
-               <P class="text-center">Carts</P>
-               <hr>
-
-               <div class="row">
-                   <table class="table table-hover table-bordered">
-                       <thead>
-                       <tr>
-                           <td>Sl</td>
-                           <td>pro_qua</td>
-                           <td>pro_title</td>
-                           <td>unit_price</td>
-                           <td>Total_price</td>
-                           <td>Action</td>
-                       </tr>
-                       </thead>
-                       <tbody>
-                       <tr>
-                           <td>1</td>
-                           <td>2</td>
-                           <td>simpale_pro</td>
-                           <td>1000</td>
-                           <td>1500</td>
-                           <td>
-                               <a href="#" class="btn btn-sm btn-danger"> Detete</a>
-                           </td>
-
-                       </tr>
-                        </tbody>
-                       <tbody>
-                       <tr>
-                           <td></td>
-                           <td></td>
-                           <td></td>
-                           <td>Total</td>
-                           <td>2500</td>
-                           <td><a href="chackout.php" class="btn btn-success"> checkout</a>
-
-                           </td>
-
-                       </tr>
-                       </tbody>
-                   </table>
-               </div>
+$total_price = !empty($cart) ? array_sum(array_column($cart, 'total_price')) : 0;
 
 
-           </div>
+?>
+
+<div class="container">
+    <main role="main">
+        <div class="contaener">
+            <br/>
+            <P class="text-center">Carts</P>
+            <hr>
+
+            <div class="row">
+                <table class="table table-hover table-bordered">
+                    <thead>
+                    <tr>
+                        <td>Sl</td>
+                        <td>Name</td>
+                        <td>Quantity</td>
+                        <td>Price</td>
+                        <td>Total_price</td>
+                        <td>Action</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php $i=1; foreach($cart as $key=> $product): ?>
+                    <tr>
+                        <td><?php echo $i++ ;?></td>
+                        <td><?php echo $product['name']; ?></td>
+                        <td><?php echo $product['quantity']; ?></td>
+                        <td>BDT <?php echo number_format($product['price'], 2); ?></td>
+                        <td>BDT <?php echo number_format($product['total_price'] ,2); ?></td>
+                        <td>
+                            <form action="cart.php"  method="post">
+                                <input type="hidden" name="id" value="<?php echo $key; ?>">
+                                <button type="submit" name="delete" class="btn btn-sm btn-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                    <tbody>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>Total</td>
+                        <td>BDT <?php echo number_format($total_price, 2); ?></td>
+                        <td><a href="chackout.php" class="btn btn-success">
+                                checkout
+                            </a>
+                            <form action="cart.php"  method="post">
+                                <button type="submit" name="clear" class="btn btn-sm btn-danger">
+                                    clear
+                                </button>
+                            </form>
+                        </td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
 
-       </main>
-
-   </div>
+        </div>
 
 
+    </main>
+
+</div>
 
 
-<?php require_once'partial/_footer.php'; ?>
+<?php require_once 'partial/_footer.php'; ?>
 
